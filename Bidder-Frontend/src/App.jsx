@@ -1,8 +1,11 @@
 import React from 'react'
+import Navbar from './Officer/Top_Navbar'
+import { LeftNavbar } from './Officer/Left_Navbar/Left_Navbar'
 
 const App = () => {
   return (
-    <div>App</div>
+      <Navbar/>,
+      <LeftNavbar/>
   )
 }
 
