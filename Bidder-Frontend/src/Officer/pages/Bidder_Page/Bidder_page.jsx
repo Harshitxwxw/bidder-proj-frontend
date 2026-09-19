@@ -6,4 +6,4 @@ const Bidder_page = () => {
   )
 }
 
-export default Bidder_page
+export { Bidder_page };

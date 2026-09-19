@@ -6,4 +6,4 @@ const Tender_bidder_page = () => {
   )
 }
 
-export default Tender_bidder_page
+export { Tender_bidder_page };

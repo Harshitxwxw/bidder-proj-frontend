@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import TendersPage from "./pages/Tender_page";
-import TenderBidderPage from "./pages/Tender_bidder_page";
-import BidderInfoPage from "./pages/Bidder_page";
+import {Tender_Page} from "./pages/Tender_Page/Tender_page";
+import {Tender_bidder_page} from "./pages/Tender_Bidder_Page/Tender_bidder_page";
+import {Bidder_page} from "./pages/Bidder_Page/Bidder_page";
 
 const OfficerRoutes = () => {
   return (
@@ -13,15 +13,15 @@ const OfficerRoutes = () => {
         />
         <Route
           path="/tenders"
-          element={<TendersPage />}
+          element={<Tender_Page />}
         />
         <Route
           path="/tender-bidder"
-          element={<TenderBidderPage />}
+          element={<Tender_bidder_page />}
         />
         <Route
           path="/bidder-info"
-          element={<BidderInfoPage />}
+          element={<Bidder_page />}
         />
         <Route
           path="*"
