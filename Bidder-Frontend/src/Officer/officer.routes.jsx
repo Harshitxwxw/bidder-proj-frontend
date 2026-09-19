@@ -4,9 +4,8 @@ import TendersPage from "./pages/Tender_page";
 import TenderBidderPage from "./pages/Tender_bidder_page";
 import BidderInfoPage from "./pages/Bidder_page";
 
-const AppRoutes = () => {
+const OfficerRoutes = () => {
   return (
-    <BrowserRouter>
       <Routes>
         <Route
           path="/"
@@ -29,8 +28,7 @@ const AppRoutes = () => {
           element={<Navigate to="/tenders" replace />}
         />
       </Routes>
-    </BrowserRouter>
   );
 };
 
-export { AppRoutes };
+export { OfficerRoutes };

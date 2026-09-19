@@ -34,8 +34,8 @@ const LeftNavbar = () => {
   return (
     <aside className="flex h-screen w-[220px] flex-col border-r border-slate-200 bg-white">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-slate-100 px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-100 px-5">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white">
           <Building2 size={17} />
         </div>
 
@@ -51,29 +51,35 @@ const LeftNavbar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-5">
-        {navItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
+      <nav className="flex-1 overflow-y-auto px-3 py-5">
+        <div className="flex flex-col gap-2">
+          {navItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              location.pathname.startsWith(`${item.path}/`);
 
-          return (
-            <button
-              key={item.path}
-              type="button"
-              onClick={() => handleNavigation(item.path)}
-              className={`w-full rounded-lg text-left transition ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-700 hover:bg-blue-50 hover:text-blue-700"
-              }`}
-            >
-              {item.component}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => handleNavigation(item.path)}
+                className={`flex h-11 w-full items-center overflow-hidden rounded-lg p-0 text-left transition-all duration-150 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                }`}
+              >
+                <div className="flex h-full w-full items-center">
+                  {item.component}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Bottom */}
-      <div className="border-t border-slate-100 p-3">
+      <div className="shrink-0 border-t border-slate-100 p-3">
         <div className="rounded-lg bg-slate-50 p-3">
           <p className="text-[11px] font-medium text-slate-500">
             Active RFPs
