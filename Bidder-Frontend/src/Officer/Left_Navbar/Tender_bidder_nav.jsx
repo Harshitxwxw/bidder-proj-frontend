@@ -1,11 +1,11 @@
-import { FileCheck2, ChevronRight } from "lucide-react";
+import { UsersRound, ChevronRight } from "lucide-react";
 
 const TenderBidderNavbar = () => {
   return (
     <div className="flex h-full w-full items-center gap-3 px-3">
-      <FileCheck2 size={18} className="shrink-0" />
+      <UsersRound size={18} className="shrink-0" />
 
-      <span className="flex-1 text-sm font-medium">
+      <span className="flex-1 truncate text-sm font-medium">
         Tender Bidder
       </span>
 

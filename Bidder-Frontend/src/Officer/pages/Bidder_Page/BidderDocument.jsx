@@ -14,12 +14,12 @@ const BidderDocument = ({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-slate-300 hover:shadow-md">
       {/* Document Row */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-slate-50"
+        className="group/btn flex w-full items-center gap-3 p-4 text-left transition-colors duration-300 hover:bg-slate-50/80"
       >
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
@@ -58,13 +58,13 @@ const BidderDocument = ({
 
         <ExternalLink
           size={16}
-          className="shrink-0 text-slate-400"
+          className="shrink-0 text-slate-400 transition-colors group-hover/btn:text-blue-500"
         />
       </button>
 
       {/* Open Document Details */}
       {open && (
-        <div className="border-t border-slate-100 bg-slate-50 px-4 py-3">
+        <div className="border-t border-slate-200/60 bg-slate-50/50 px-4 py-3">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <p className="text-xs font-medium text-slate-500">
@@ -85,7 +85,7 @@ const BidderDocument = ({
                   event.stopPropagation();
                   onVerify();
                 }}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow"
               >
                 Mark as Verified
               </button>

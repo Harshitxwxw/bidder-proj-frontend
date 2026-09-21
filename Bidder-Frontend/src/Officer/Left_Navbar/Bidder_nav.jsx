@@ -1,11 +1,11 @@
-import { UserRound, ChevronRight } from "lucide-react";
+import { BadgeCheck, ChevronRight } from "lucide-react";
 
 const BidderInfoNavbar = () => {
   return (
     <div className="flex h-full w-full items-center gap-3 px-3">
-      <UserRound size={18} className="shrink-0" />
+      <BadgeCheck size={18} className="shrink-0" />
 
-      <span className="flex-1 text-sm font-medium">
+      <span className="flex-1 truncate text-sm font-medium">
         Bidder Info
       </span>
 

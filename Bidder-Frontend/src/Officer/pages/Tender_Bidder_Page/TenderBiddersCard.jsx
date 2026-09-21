@@ -4,9 +4,10 @@ import {
   Users,
   ChevronDown,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 
-import {TenderBidderCard} from "./TenderBidderCard";
+import { TenderBidderCard } from "./TenderBidderCard";
 
 const TenderBiddersCard = ({
   tender,
@@ -14,82 +15,80 @@ const TenderBiddersCard = ({
   onToggle,
 }) => {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200">
+    <div
+      id={`tender-${tender.id}`}
+      className="group/card overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 shadow-xs backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+    >
       {/* Tender Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full text-left"
+        className="w-full text-left transition-colors duration-200 hover:bg-slate-50/50"
       >
-        <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center">
           {/* Tender Icon */}
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-            <BarChart3 size={20} />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition-transform duration-200 group-hover/card:scale-105">
+            <BarChart3 size={18} />
           </div>
 
           {/* Tender Information */}
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="truncate text-sm sm:text-base font-bold text-slate-900">
               {tender.name}
             </h2>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5">
-                <MapPin size={14} />
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <MapPin size={13} className="text-slate-400" />
                 {tender.location}
               </span>
 
-              <span className="flex items-center gap-1.5">
-                <Tag size={14} />
+              <span className="flex items-center gap-1">
+                <Tag size={13} className="text-slate-400" />
                 {tender.sector}
               </span>
 
-              <span className="flex items-center gap-1.5">
-                <Users size={14} />
+              <span className="flex items-center gap-1">
+                <Users size={13} className="text-slate-400" />
                 {tender.bidders.length} Bidders
               </span>
             </div>
           </div>
 
-          {/* Analyze */}
-          <div className="flex items-center gap-2">
+          {/* Large Analyze Button & Expand */}
+          <div className="flex items-center gap-3 self-end sm:self-center">
             <button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
-
-                // Add your analyze API/navigation here
-                console.log(
-                  "Analyze tender:",
-                  tender.id
-                );
+                console.log("Analyze tender:", tender.id);
               }}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-base font-bold text-white shadow-md transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg active:scale-95"
             >
+              <Sparkles size={17} className="shrink-0" />
               Analyze
             </button>
 
             <div
-              className={`rounded-lg bg-slate-100 p-2 text-slate-500 transition-transform ${
-                isOpen ? "rotate-180" : ""
+              className={`rounded-lg bg-slate-50 p-2 text-slate-400 transition-all duration-200 group-hover/card:bg-slate-100 group-hover/card:text-slate-600 ${
+                isOpen ? "rotate-180 bg-blue-50 text-blue-600 group-hover/card:bg-blue-100 group-hover/card:text-blue-700" : ""
               }`}
             >
-              <ChevronDown size={18} />
+              <ChevronDown size={17} />
             </div>
           </div>
         </div>
       </button>
 
-      {/* Bidders */}
+      {/* Bidders Accordion Content */}
       {isOpen && (
-        <div className="border-t border-slate-100 bg-slate-50/60 p-4">
-          <div className="mb-3 flex items-center justify-between px-1">
+        <div className="border-t border-slate-100 bg-slate-50/60 p-3.5">
+          <div className="mb-2.5 flex items-center justify-between px-1">
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">
+              <h3 className="text-xs font-semibold text-slate-800">
                 Submitted Bidders
               </h3>
-
-              <p className="mt-0.5 text-xs text-slate-400">
+              <p className="text-[11px] text-slate-400">
                 Sorted by compliance score.
               </p>
             </div>
@@ -99,28 +98,13 @@ const TenderBiddersCard = ({
             </span>
           </div>
 
-          <div className="space-y-2">
-            {/*
-              Highest compliance first.
-              If compliance is equal,
-              earliest submission date comes first.
-            */}
+          <div className="space-y-1.5">
             {[...tender.bidders]
               .sort((a, b) => {
-                if (
-                  b.complianceScore !==
-                  a.complianceScore
-                ) {
-                  return (
-                    b.complianceScore -
-                    a.complianceScore
-                  );
+                if (b.complianceScore !== a.complianceScore) {
+                  return b.complianceScore - a.complianceScore;
                 }
-
-                return (
-                  new Date(a.submittedDate) -
-                  new Date(b.submittedDate)
-                );
+                return new Date(a.submittedDate) - new Date(b.submittedDate);
               })
               .map((bidder) => (
                 <TenderBidderCard
@@ -135,4 +119,4 @@ const TenderBiddersCard = ({
   );
 };
 
-export  {TenderBiddersCard};
+export { TenderBiddersCard };
