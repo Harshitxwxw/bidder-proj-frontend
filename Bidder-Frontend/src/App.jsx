@@ -9,7 +9,8 @@ import BidderRoutes from "./Bidder/bidder.routes";
 function AppContent() {
   const location = useLocation();
 
-  const isBidderRoute = location.pathname.startsWith("/bidder");
+  const isBidderRoute =
+    location.pathname === "/bidder" || location.pathname.startsWith("/bidder/");
 
   if (isBidderRoute) {
     return <BidderRoutes />;
