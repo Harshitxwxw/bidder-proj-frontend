@@ -1,0 +1,14 @@
+import { ArrowLeft, CalendarDays, Mail, MapPin, Phone, ShieldCheck, Trophy } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import BidderTopbar from "../components/BidderTopbar";
+import StatusBadge from "../components/StatusBadge";
+import { MOCK_ALLOTTED } from "../data/mockData";
+
+export default function AllotmentDetails() {
+  const { tenderId } = useParams();
+  const navigate = useNavigate();
+  const tender = MOCK_ALLOTTED.find((item) => item.tenderId === tenderId);
+  if (!tender) return <div className="p-10 text-sm text-slate-500">Allotment record not found.</div>;
+  return <div><BidderTopbar title="Allotment & Contact Details" subtitle="Final tender information available to the allotted bidder." /><div className="mx-auto max-w-[1050px] p-6 lg:p-8"><button onClick={() => navigate("/bidder/allotted")} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600"><ArrowLeft size={15} /> Allotted Tenders</button><section className="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start"><div className="flex gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Trophy size={22} /></div><div><p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">{tender.tenderId}</p><h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{tender.title}</h2><p className="mt-1 text-xs text-slate-500">{tender.department} · {tender.location}</p></div></div><StatusBadge status="Allotted" /></div><div className="mt-6 grid gap-3 sm:grid-cols-3"><Info icon={MapPin} label="Location" value={tender.location} /><Info icon={CalendarDays} label="Allotted on" value={new Date(tender.allottedOn).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} /><Info icon={ShieldCheck} label="Requirements" value={`${tender.requirements.length} recorded`} /></div></section><section className="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Official contact</p><h3 className="mt-1 text-lg font-extrabold text-slate-900">Procurement Contact</h3><div className="mt-5 grid gap-3 sm:grid-cols-3"><Info icon={Trophy} label="Contact person" value={tender.contact.name} /><Info icon={Phone} label="Mobile" value={tender.contact.mobile} /><Info icon={Mail} label="Email" value={tender.contact.email} /></div></section></div></div>;
+}
+function Info({ icon: Icon, label, value }) { return <div className="rounded-xl bg-slate-50 p-4"><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"><Icon size={13} /> {label}</div><p className="mt-1.5 break-words text-xs font-bold text-slate-800">{value}</p></div>; }
