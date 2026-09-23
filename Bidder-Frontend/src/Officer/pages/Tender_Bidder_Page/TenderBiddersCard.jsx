@@ -5,6 +5,7 @@ import {
   ChevronDown,
   BarChart3,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 import { TenderBidderCard } from "./TenderBidderCard";
@@ -13,7 +14,11 @@ const TenderBiddersCard = ({
   tender,
   isOpen,
   onToggle,
+  onAnalyze,
+  isAnalyzing = false,
 }) => {
+  const biddersList = tender.bidders || [];
+
   return (
     <div
       id={`tender-${tender.id}`}
@@ -50,7 +55,7 @@ const TenderBiddersCard = ({
 
               <span className="flex items-center gap-1">
                 <Users size={13} className="text-slate-400" />
-                {tender.bidders.length} Bidders
+                {biddersList.length} Bidders
               </span>
             </div>
           </div>
@@ -59,20 +64,28 @@ const TenderBiddersCard = ({
           <div className="flex items-center gap-3 self-end sm:self-center">
             <button
               type="button"
+              disabled={isAnalyzing}
               onClick={(event) => {
                 event.stopPropagation();
-                console.log("Analyze tender:", tender.id);
+                onAnalyze?.();
               }}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-base font-bold text-white shadow-md transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg active:scale-95"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-base font-bold text-white shadow-md transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed"
             >
-              <Sparkles size={17} className="shrink-0" />
-              Analyze
+              {isAnalyzing ? (
+                <>
+                  <Loader2 size={17} className="animate-spin shrink-0" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  Analyze
+                </>
+              )}
             </button>
 
             <div
-              className={`rounded-lg bg-slate-50 p-2 text-slate-400 transition-all duration-200 group-hover/card:bg-slate-100 group-hover/card:text-slate-600 ${
-                isOpen ? "rotate-180 bg-blue-50 text-blue-600 group-hover/card:bg-blue-100 group-hover/card:text-blue-700" : ""
-              }`}
+              className={`rounded-lg bg-slate-50 p-2 text-slate-400 transition-all duration-200 group-hover/card:bg-slate-100 group-hover/card:text-slate-600 ${isOpen ? "rotate-180 bg-blue-50 text-blue-600 group-hover/card:bg-blue-100 group-hover/card:text-blue-700" : ""
+                }`}
             >
               <ChevronDown size={17} />
             </div>
@@ -94,25 +107,31 @@ const TenderBiddersCard = ({
             </div>
 
             <span className="text-xs font-medium text-slate-400">
-              {tender.bidders.length} bidders
+              {biddersList.length} bidders
             </span>
           </div>
 
-          <div className="space-y-1.5">
-            {[...tender.bidders]
-              .sort((a, b) => {
-                if (b.complianceScore !== a.complianceScore) {
-                  return b.complianceScore - a.complianceScore;
-                }
-                return new Date(a.submittedDate) - new Date(b.submittedDate);
-              })
-              .map((bidder) => (
-                <TenderBidderCard
-                  key={bidder.id}
-                  bidder={bidder}
-                />
-              ))}
-          </div>
+          {biddersList.length === 0 ? (
+            <p className="py-4 text-center text-xs text-slate-400">
+              No bidders submitted for this tender yet.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {[...biddersList]
+                .sort((a, b) => {
+                  if (b.complianceScore !== a.complianceScore) {
+                    return (b.complianceScore || 0) - (a.complianceScore || 0);
+                  }
+                  return new Date(a.submittedDate) - new Date(b.submittedDate);
+                })
+                .map((bidder) => (
+                  <TenderBidderCard
+                    key={bidder.id}
+                    bidder={bidder}
+                  />
+                ))}
+            </div>
+          )}
         </div>
       )}
     </div>

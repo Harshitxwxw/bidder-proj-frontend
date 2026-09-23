@@ -1,117 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search,
-  SlidersHorizontal,
   ChevronDown,
   Users,
   ShieldCheck,
   Clock3,
+  Loader2,
+  CheckCircle2,
+  RotateCcw,
+  ArrowUpDown,
+  X,
+  SlidersHorizontal,
 } from "lucide-react";
 
-import {BidderCard} from "../Bidder_Page/BidderCard";
-
-const initialBidders = [
-  {
-    id: 1,
-    name: "Apex Cloud Solutions Ltd",
-    complianceScore: 92,
-    submittedDate: "Sep 12, 2026",
-    documents: [
-      {
-        id: 101,
-        name: "Statutory Business License & Tax Clearance Certificate",
-        uploadDate: "Sep 12, 2026",
-        verified: false,
-      },
-      {
-        id: 102,
-        name: "ISO 27001 / SOC 2 Information Security Compliance Audit",
-        uploadDate: "Sep 14, 2026",
-        verified: false,
-      },
-      {
-        id: 103,
-        name: "Audited Financial Statements FY24 & Bank Solvency Letter",
-        uploadDate: "Sep 08, 2026",
-        verified: true,
-      },
-    ],
-  },
-
-  {
-    id: 2,
-    name: "NovaTech Global Systems Inc.",
-    complianceScore: 96,
-    submittedDate: "Sep 14, 2026",
-    documents: [
-      {
-        id: 201,
-        name: "National Commercial Registry Extract & Articles of Incorporation",
-        uploadDate: "Sep 16, 2026",
-        verified: false,
-      },
-      {
-        id: 202,
-        name: "Quality Management Certification ISO 9001:2015",
-        uploadDate: "Sep 10, 2026",
-        verified: true,
-      },
-      {
-        id: 203,
-        name: "Bank Guarantee & Bid Bond Declaration",
-        uploadDate: "Sep 11, 2026",
-        verified: true,
-      },
-    ],
-  },
-
-  {
-    id: 3,
-    name: "Vertex Infrastructure Group",
-    complianceScore: 88,
-    submittedDate: "Sep 15, 2026",
-    documents: [
-      {
-        id: 301,
-        name: "Corporate Registration Certificate",
-        uploadDate: "Sep 15, 2026",
-        verified: true,
-      },
-      {
-        id: 302,
-        name: "Tax Compliance Certificate",
-        uploadDate: "Sep 15, 2026",
-        verified: false,
-      },
-    ],
-  },
-
-  {
-    id: 4,
-    name: "Global Meridian Technologies",
-    complianceScore: 94,
-    submittedDate: "Sep 16, 2026",
-    documents: [
-      {
-        id: 401,
-        name: "Business Operating License",
-        uploadDate: "Sep 16, 2026",
-        verified: true,
-      },
-      {
-        id: 402,
-        name: "Information Security Certification",
-        uploadDate: "Sep 16, 2026",
-        verified: true,
-      },
-    ],
-  },
-];
+import { BidderCard } from "./BidderCard";
+import { officerService } from "../../services/officerService";
+import { FilterDropdown } from "../../components/FilterDropdown";
 
 const Bidder_page = () => {
-  const [bidders, setBidders] = useState(initialBidders);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const handleDocumentStatusChange = (bidderId, documentId) => {
+  const [bidders, setBidders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize filters from URL query parameters so navigating back preserves filter state!
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
+  const [statusFilter, setStatusFilter] = useState(
+    () => searchParams.get("status") || "ALL"
+  );
+  const [scoreFilter, setScoreFilter] = useState(
+    () => searchParams.get("score") || "ALL"
+  );
+  const [sortBy, setSortBy] = useState(
+    () => searchParams.get("sort") || "DEFAULT"
+  );
+
+  // Sync state to URL search parameters
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set("q", search.trim());
+    if (statusFilter !== "ALL") params.set("status", statusFilter);
+    if (scoreFilter !== "ALL") params.set("score", scoreFilter);
+    if (sortBy !== "DEFAULT") params.set("sort", sortBy);
+
+    setSearchParams(params, { replace: true });
+  }, [search, statusFilter, scoreFilter, sortBy, setSearchParams]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBidders = async () => {
+      try {
+        setLoading(true);
+        const data = await officerService.fetchBiddersWithDocuments();
+        if (isMounted) {
+          setBidders(data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load bidders via axios:", err);
+        if (isMounted) {
+          setBidders([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadBidders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleDocumentStatusChange = async (bidderId, documentId) => {
+    // Optimistically update document verification status in state
     setBidders((currentBidders) =>
       currentBidders.map((bidder) => {
         if (bidder.id !== bidderId) {
@@ -120,7 +86,7 @@ const Bidder_page = () => {
 
         return {
           ...bidder,
-          documents: bidder.documents.map((document) =>
+          documents: (bidder.documents || []).map((document) =>
             document.id === documentId
               ? {
                   ...document,
@@ -131,22 +97,161 @@ const Bidder_page = () => {
         };
       })
     );
+
+    // Persist verification status in the database via backend
+    try {
+      await officerService.verifyDocument(documentId);
+    } catch (err) {
+      console.error(`Error verifying document ${documentId}:`, err);
+    }
   };
 
+  const filteredBidders = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return bidders
+      .filter((bidder) => {
+        const docs = bidder.documents || [];
+        const verifiedCount = docs.filter((d) => d.verified).length;
+        const totalDocs = docs.length;
+        const isFullyVerified = totalDocs > 0 && verifiedCount === totalDocs;
+
+        // Search text match
+        const matchesSearch =
+          !query ||
+          bidder.name?.toLowerCase().includes(query) ||
+          bidder.application_id?.toLowerCase().includes(query) ||
+          docs.some((doc) => doc.name?.toLowerCase().includes(query));
+
+        // Status match
+        let matchesStatus = true;
+        if (statusFilter === "VERIFIED") {
+          matchesStatus = isFullyVerified;
+        } else if (statusFilter === "PENDING") {
+          matchesStatus = !isFullyVerified;
+        }
+
+        // Score tier match
+        let matchesScore = true;
+        const score = bidder.complianceScore || 0;
+        if (scoreFilter === "HIGH") {
+          matchesScore = score >= 90;
+        } else if (scoreFilter === "MEDIUM") {
+          matchesScore = score >= 70 && score < 90;
+        }
+
+        return matchesSearch && matchesStatus && matchesScore;
+      })
+      .sort((a, b) => {
+        if (sortBy === "SCORE_DESC") {
+          return (b.complianceScore || 0) - (a.complianceScore || 0);
+        }
+        if (sortBy === "NAME_ASC") {
+          return (a.name || "").localeCompare(b.name || "");
+        }
+        if (sortBy === "PENDING_FIRST") {
+          const aPending = (a.documents || []).filter((d) => !d.verified).length;
+          const bPending = (b.documents || []).filter((d) => !d.verified).length;
+          return bPending - aPending;
+        }
+        return 0;
+      });
+  }, [bidders, search, statusFilter, scoreFilter, sortBy]);
+
+  const totalFiles = useMemo(() => {
+    return bidders.reduce(
+      (acc, bidder) => acc + (bidder.documents ? bidder.documents.length : 0),
+      0
+    );
+  }, [bidders]);
+
+  const verifiedFiles = useMemo(() => {
+    return bidders.reduce(
+      (acc, bidder) =>
+        acc + (bidder.documents ? bidder.documents.filter((d) => d.verified).length : 0),
+      0
+    );
+  }, [bidders]);
+
+  const pendingFiles = Math.max(0, totalFiles - verifiedFiles);
+  const clearanceRate =
+    totalFiles > 0 ? Math.round((verifiedFiles / totalFiles) * 100) : 100;
+
+  // Dynamic filter lists with counts
+  const statusOptions = useMemo(() => {
+    let verifiedCount = 0;
+    let pendingCount = 0;
+    bidders.forEach((b) => {
+      const docs = b.documents || [];
+      const v = docs.filter((d) => d.verified).length;
+      if (docs.length > 0 && v === docs.length) {
+        verifiedCount++;
+      } else {
+        pendingCount++;
+      }
+    });
+    return [
+      { value: "ALL", label: `All Statuses (${bidders.length})` },
+      {
+        value: "VERIFIED",
+        label: "Fully Verified (3/3)",
+        count: verifiedCount,
+      },
+      {
+        value: "PENDING",
+        label: "Pending Review (<3/3)",
+        count: pendingCount,
+      },
+    ];
+  }, [bidders]);
+
+  const scoreOptions = useMemo(() => {
+    let high = 0;
+    let med = 0;
+    let low = 0;
+    bidders.forEach((b) => {
+      const score = b.complianceScore || 0;
+      if (score >= 90) high++;
+      else if (score >= 70) med++;
+      else low++;
+    });
+    return [
+      { value: "ALL", label: "All Compliance Scores" },
+      { value: "HIGH", label: "High Compliance (≥ 90%)", count: high },
+      { value: "MEDIUM", label: "Medium Compliance (70%–89%)", count: med },
+      { value: "LOW", label: "Low Compliance (< 70%)", count: low },
+    ];
+  }, [bidders]);
+
+  const sortOptions = [
+    { value: "DEFAULT", label: "Default Order" },
+    { value: "SCORE_DESC", label: "Highest Score First" },
+    { value: "PENDING_FIRST", label: "Pending Review First" },
+    { value: "NAME_ASC", label: "Company Name (A to Z)" },
+  ];
+
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    statusFilter !== "ALL" ||
+    scoreFilter !== "ALL" ||
+    sortBy !== "DEFAULT";
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("ALL");
+    setScoreFilter("ALL");
+    setSortBy("DEFAULT");
+  };
 
   return (
     <div className="min-h-screen bg-transparent p-6 lg:p-8">
       {/* Header */}
       <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
             <span>Bidder Registry</span>
-
             <span className="h-1 w-1 rounded-full bg-slate-300" />
-
-            <span className="text-slate-400">
-              Compliance Center
-            </span>
+            <span className="text-slate-400">Compliance Center</span>
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -154,8 +259,7 @@ const Bidder_page = () => {
           </h1>
 
           <p className="mt-1 max-w-2xl text-sm text-slate-500">
-            Review bidder submissions and verify their compliance
-            documentation.
+            Review bidder submissions and verify their compliance documentation.
           </p>
         </div>
       </div>
@@ -174,11 +278,11 @@ const Bidder_page = () => {
           </div>
 
           <p className="text-3xl font-bold tracking-tight text-slate-900">
-            142
+            {loading ? "..." : bidders.length}
           </p>
 
           <p className="mt-1 text-xs font-medium text-emerald-600">
-            +12 this week
+            Active vendor profiles in database
           </p>
         </div>
 
@@ -194,11 +298,11 @@ const Bidder_page = () => {
           </div>
 
           <p className="text-3xl font-bold tracking-tight text-slate-900">
-            894
+            {loading ? "..." : verifiedFiles}
           </p>
 
           <p className="mt-1 text-xs font-medium text-slate-500">
-            87.2% clearance rate
+            {clearanceRate}% clearance rate
           </p>
         </div>
 
@@ -208,66 +312,206 @@ const Bidder_page = () => {
               Pending Review
             </p>
 
-            <div className="rounded-xl bg-amber-50 p-2 text-amber-600 transition-transform duration-300 group-hover:scale-110">
+            <div className="rounded-xl bg-amber-50 px-2.5 py-2 text-amber-600 transition-transform duration-300 group-hover:scale-110">
               <Clock3 size={18} />
             </div>
           </div>
 
           <p className="text-3xl font-bold tracking-tight text-slate-900">
-            38
+            {loading ? "..." : pendingFiles}
           </p>
 
           <p className="mt-1 text-xs font-medium text-amber-600">
-            Requires verification
+            Requires verification sign-off
           </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-8 rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
-        <div className="flex flex-col gap-4 lg:flex-row">
-          <button className="flex items-center justify-between gap-8 rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900">
-            All Domains
-            <ChevronDown size={15} className="text-slate-400" />
-          </button>
+      {/* Interactive Filters Bar */}
+      <div className="relative z-30 mb-8 rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          {/* Status Filter */}
+          <FilterDropdown
+            label="Verification Status"
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            options={statusOptions}
+            icon={ShieldCheck}
+            allValue="ALL"
+            allLabel={`All Statuses (${bidders.length})`}
+            placeholder="All Verification Statuses"
+          />
 
-          <button className="flex items-center justify-between gap-8 rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900">
-            All Locations
-            <ChevronDown size={15} className="text-slate-400" />
-          </button>
+          {/* Compliance Score Filter */}
+          <FilterDropdown
+            label="Compliance Score"
+            value={scoreFilter}
+            onChange={(val) => setScoreFilter(val)}
+            options={scoreOptions}
+            icon={CheckCircle2}
+            allValue="ALL"
+            allLabel="All Scores"
+            placeholder="All Compliance Scores"
+          />
 
-          <button className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900">
-            <SlidersHorizontal size={15} className="text-slate-400" />
-            Filters
-          </button>
+          {/* Sort By Filter */}
+          <FilterDropdown
+            label="Sort"
+            value={sortBy}
+            onChange={(val) => setSortBy(val)}
+            options={sortOptions}
+            icon={ArrowUpDown}
+            allValue="DEFAULT"
+            allLabel="Default Order"
+            placeholder="Sort Order"
+          />
 
-          <div className="relative ml-auto w-full lg:w-96">
+          {/* Reset Filters Button */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-red-200/80 bg-red-50/80 px-3.5 text-xs font-semibold text-red-600 transition-all hover:bg-red-100 hover:text-red-700 cursor-pointer shadow-2xs"
+              title="Clear all filters"
+            >
+              <RotateCcw size={13} />
+              Reset Filters
+            </button>
+          )}
+
+          {/* Search Box */}
+          <div className="relative w-full lg:ml-auto lg:w-80">
             <Search
-              size={17}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors peer-focus:text-blue-500"
+              size={15}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors peer-focus:text-blue-500"
             />
-
             <input
               type="text"
-              placeholder="Search bidder..."
-              className="peer w-full rounded-xl border border-slate-200/80 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100/50"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search company, app ID, document..."
+              className="peer h-10 w-full rounded-xl border border-slate-200/80 bg-white/90 py-2 pl-9.5 pr-9 text-xs font-medium outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100/50 shadow-2xs"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Active Filter Pills */}
+        {hasActiveFilters && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-xs">
+            <span className="font-semibold text-slate-400">Active Filters:</span>
+
+            {statusFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 font-medium text-blue-700">
+                Status: {statusFilter === "VERIFIED" ? "Fully Verified" : "Pending Review"}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("ALL")}
+                  className="hover:text-blue-900"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+
+            {scoreFilter !== "ALL" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-1 font-medium text-indigo-700">
+                Score: {scoreFilter === "HIGH" ? "≥ 90%" : "70%–89%"}
+                <button
+                  type="button"
+                  onClick={() => setScoreFilter("ALL")}
+                  className="hover:text-indigo-900"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+
+            {sortBy !== "DEFAULT" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 font-medium text-amber-700">
+                Sorted
+                <button
+                  type="button"
+                  onClick={() => setSortBy("DEFAULT")}
+                  className="hover:text-amber-900"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+
+            {search && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-1 font-medium text-slate-700">
+                &ldquo;{search}&rdquo;
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="hover:text-slate-900"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Bidders */}
-      <div className="space-y-2.5">
-        {bidders.map((bidder) => (
-          <BidderCard
-            key={bidder.id}
-            bidder={bidder}
-            onDocumentStatusChange={handleDocumentStatusChange}
-          />
-        ))}
-      </div>
+      {/* Bidders List */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+          <Loader2 size={36} className="animate-spin text-blue-600 mb-3" />
+          <p className="text-sm font-semibold text-slate-700">
+            Fetching registered bidders and documents from database...
+          </p>
+          <p className="mt-1 text-xs text-slate-400">Loading vendor verification statuses</p>
+        </div>
+      ) : filteredBidders.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white/70 p-12 text-center backdrop-blur-xl">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+            <Search size={22} />
+          </div>
+          <p className="text-base font-bold text-slate-800">
+            {bidders.length === 0
+              ? "No bidders found from database."
+              : "No bidders match your filter criteria."}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {bidders.length === 0
+              ? "Ensure the backend server is running on port 8000 and the database has records."
+              : "Try adjusting your verification status, score tier, or search query."}
+          </p>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+            >
+              <RotateCcw size={13} />
+              Reset All Filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredBidders.map((bidder) => (
+            <BidderCard
+              key={bidder.id}
+              bidder={bidder}
+              onDocumentStatusChange={handleDocumentStatusChange}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export  {Bidder_page};
+export { Bidder_page };

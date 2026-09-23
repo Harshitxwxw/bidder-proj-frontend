@@ -13,13 +13,14 @@ const BidderCard = ({
   onDocumentStatusChange,
 }) => {
   const [open, setOpen] = useState(false);
+  const documents = bidder.documents || [];
 
-  const verifiedDocuments = bidder.documents.filter(
+  const verifiedDocuments = documents.filter(
     (document) => document.verified
   ).length;
 
   const isFullyVerified =
-    verifiedDocuments === bidder.documents.length;
+    documents.length > 0 && verifiedDocuments === documents.length;
 
   return (
     <div className="group/card overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
@@ -48,7 +49,7 @@ const BidderCard = ({
 
             <span className="flex items-center gap-1">
               <FileText size={13} className="text-slate-400" />
-              {bidder.documents.length} Documents
+              {documents.length} Documents
             </span>
           </div>
         </div>
@@ -72,7 +73,7 @@ const BidderCard = ({
                 : "bg-amber-50 text-amber-700 border border-amber-200/50"
             }`}
           >
-            {verifiedDocuments}/{bidder.documents.length} Verified
+            {verifiedDocuments}/{documents.length} Verified
           </div>
 
           {/* Expand Chevron */}
@@ -100,24 +101,30 @@ const BidderCard = ({
             </div>
 
             <span className="text-xs font-medium text-slate-400">
-              {bidder.documents.length} files
+              {documents.length} files
             </span>
           </div>
 
-          <div className="space-y-1.5">
-            {bidder.documents.map((document) => (
-              <BidderDocument
-                key={document.id}
-                document={document}
-                onVerify={() =>
-                  onDocumentStatusChange(
-                    bidder.id,
-                    document.id
-                  )
-                }
-              />
-            ))}
-          </div>
+          {documents.length === 0 ? (
+            <p className="py-4 text-center text-xs text-slate-400">
+              No documents uploaded by this bidder yet.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {documents.map((document) => (
+                <BidderDocument
+                  key={document.id}
+                  document={document}
+                  onVerify={() =>
+                    onDocumentStatusChange(
+                      bidder.id,
+                      document.id
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

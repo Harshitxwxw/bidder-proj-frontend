@@ -36,19 +36,19 @@ const LeftNavbar = () => {
   const navItems = [
     {
       name: "Tenders",
-      path: "/tenders",
+      path: "/officer/tenders",
       icon: Briefcase,
       component: <TendersNavbar />,
     },
     {
       name: "Tender Bidder",
-      path: "/tender-bidder",
+      path: "/officer/tender-bidder",
       icon: UsersRound,
       component: <TenderBidderNavbar />,
     },
     {
       name: "Bidder Info",
-      path: "/bidder-info",
+      path: "/officer/bidder-info",
       icon: BadgeCheck,
       component: <BidderInfoNavbar />,
     },

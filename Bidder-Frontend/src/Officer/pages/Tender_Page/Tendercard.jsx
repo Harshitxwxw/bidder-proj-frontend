@@ -10,7 +10,7 @@ const TenderCard = ({ tender }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate("/tender-bidder", {
+    navigate("/officer/tender-bidder", {
       state: { selectedTenderId: tender.id },
     });
   };
@@ -37,9 +37,11 @@ const TenderCard = ({ tender }) => {
 
         {/* Main Information */}
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-semibold text-slate-900 transition-colors group-hover/card:text-blue-600">
-            {tender.name}
-          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="truncate text-sm font-semibold text-slate-900 transition-colors group-hover/card:text-blue-600">
+              {tender.name}
+            </h2>
+          </div>
 
           <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
             {/* Location */}
