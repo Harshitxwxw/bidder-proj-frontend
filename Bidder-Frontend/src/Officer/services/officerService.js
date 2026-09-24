@@ -104,6 +104,15 @@ export const officerService = {
                 name: sub.name || sub.company_name || `Bidder ${sIdx + 1}`,
                 complianceScore: typeof sub.complianceScore === "number" ? sub.complianceScore : (sub.compliance_score || 0),
                 submittedDate: sub.submittedDate || "2026-09-12",
+                documents: Array.isArray(sub.documents)
+                  ? sub.documents.map((doc, dIdx) => ({
+                      id: doc.id || dIdx + 1,
+                      document_id: doc.document_id,
+                      name: doc.name || doc.original_file_name,
+                      uploadDate: doc.uploadDate || sub.submittedDate || "2026-09-12",
+                      verified: Boolean(doc.verified),
+                    }))
+                  : [],
               }))
             : [],
         }));

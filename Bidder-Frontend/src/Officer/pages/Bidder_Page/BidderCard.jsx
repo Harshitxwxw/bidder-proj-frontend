@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   CalendarDays,
@@ -11,8 +11,16 @@ import { BidderDocument } from "./BidderDocument";
 const BidderCard = ({
   bidder,
   onDocumentStatusChange,
+  defaultOpen = false,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
+  
+  useEffect(() => {
+    if (defaultOpen) {
+      setOpen(true);
+    }
+  }, [defaultOpen]);
+
   const documents = bidder.documents || [];
 
   const verifiedDocuments = documents.filter(
@@ -23,7 +31,10 @@ const BidderCard = ({
     documents.length > 0 && verifiedDocuments === documents.length;
 
   return (
-    <div className="group/card overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+    <div 
+      id={`bidder-${bidder.id}`}
+      className="group/card overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+    >
       {/* Bidder Header */}
       <button
         type="button"

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   Search,
   ChevronDown,
@@ -19,10 +19,24 @@ import { officerService } from "../../services/officerService";
 import { FilterDropdown } from "../../components/FilterDropdown";
 
 const Bidder_page = () => {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [bidders, setBidders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const selectedBidderId = location.state?.selectedBidderId;
+
+  useEffect(() => {
+    if (selectedBidderId && !loading) {
+      setTimeout(() => {
+        const el = document.getElementById(`bidder-${selectedBidderId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 150);
+    }
+  }, [selectedBidderId, loading]);
 
   // Initialize filters from URL query parameters so navigating back preserves filter state!
   const [search, setSearch] = useState(() => searchParams.get("q") || "");
@@ -506,6 +520,7 @@ const Bidder_page = () => {
               key={bidder.id}
               bidder={bidder}
               onDocumentStatusChange={handleDocumentStatusChange}
+              defaultOpen={String(selectedBidderId) === String(bidder.id) || String(selectedBidderId) === String(bidder.bidder_id)}
             />
           ))}
         </div>

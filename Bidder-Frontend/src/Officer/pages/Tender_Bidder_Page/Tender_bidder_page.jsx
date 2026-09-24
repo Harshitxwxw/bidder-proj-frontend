@@ -137,6 +137,36 @@ const Tender_bidder_page = () => {
     }
   };
 
+  const handleDocumentStatusChange = async (tenderId, bidderId, documentId) => {
+    // Optimistically update document verification status in state
+    setTenders((currentTenders) =>
+      currentTenders.map((tender) => {
+        if (tender.id !== tenderId) return tender;
+        return {
+          ...tender,
+          bidders: (tender.bidders || []).map((bidder) => {
+            if (bidder.id !== bidderId) return bidder;
+            return {
+              ...bidder,
+              documents: (bidder.documents || []).map((document) =>
+                document.id === documentId
+                  ? { ...document, verified: true }
+                  : document
+              ),
+            };
+          }),
+        };
+      })
+    );
+
+    // Persist verification status in the database via backend
+    try {
+      await officerService.verifyDocument(documentId);
+    } catch (err) {
+      console.error(`Error verifying document ${documentId}:`, err);
+    }
+  };
+
   // Dynamic filter lists with counts from database tenders
   const sectorOptions = useMemo(() => {
     const counts = {};
@@ -467,6 +497,7 @@ const Tender_bidder_page = () => {
               onToggle={() => handleTenderToggle(tender.id)}
               onAnalyze={() => handleAnalyze(tender.id)}
               isAnalyzing={Boolean(analyzingTenders[tender.id])}
+              onDocumentStatusChange={(bidderId, documentId) => handleDocumentStatusChange(tender.id, bidderId, documentId)}
             />
           ))}
         </div>

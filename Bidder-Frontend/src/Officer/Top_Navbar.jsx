@@ -5,8 +5,21 @@ import {
   ChevronDown,
   ShieldCheck,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
 
 const Top_Navbar = () => {
+  const navigate = useNavigate();
+  const user = authService.getCurrentUser();
+  const userName = user?.email?.split("@")[0] || "User";
+  const initials = userName.slice(0, 2).toUpperCase();
+  const roleName = user?.role ? user.role.replace("_", " ").toLowerCase() : "officer";
+
+  const handleProfileClick = () => {
+    if (user?.role === "TENDER_CREATOR") navigate("/tender/profile");
+    else if (user?.role === "BIDDER") navigate("/bidder/profile");
+    else navigate("/officer/profile");
+  };
   return (
     <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white/70 backdrop-blur-md px-6 shadow-sm">
       {/* Left */}
@@ -72,20 +85,21 @@ const Top_Navbar = () => {
 
         <button
           type="button"
+          onClick={handleProfileClick}
           className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-all duration-300 hover:bg-slate-100/80"
         >
           <div className="hidden text-right leading-tight sm:block">
-            <p className="text-sm font-semibold text-slate-800">
-              Director Vance
+            <p className="text-sm font-semibold text-slate-800 capitalize">
+              {userName}
             </p>
 
-            <p className="text-[11px] text-slate-500">
-              Compliance Officer
+            <p className="text-[11px] text-slate-500 capitalize">
+              {roleName}
             </p>
           </div>
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-700 text-sm font-semibold text-white">
-            DV
+            {initials}
           </div>
 
           <ChevronDown size={15} className="text-slate-400" />

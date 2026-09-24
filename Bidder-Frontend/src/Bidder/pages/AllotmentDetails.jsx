@@ -1,8 +1,9 @@
 import { ArrowLeft, CalendarDays, Mail, MapPin, Phone, ShieldCheck, Trophy } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import BidderTopbar from "../components/BidderTopbar";
 import StatusBadge from "../components/StatusBadge";
 import { MOCK_ALLOTTED } from "../data/mockData";
+
+import BidderTopbar from "../components/BidderTopbar";
 
 export default function AllotmentDetails() {
   const { tenderId } = useParams();

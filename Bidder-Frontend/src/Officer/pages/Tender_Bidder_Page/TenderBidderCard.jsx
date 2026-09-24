@@ -1,6 +1,8 @@
 import { CalendarDays, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const TenderBidderCard = ({ bidder }) => {
+  const navigate = useNavigate();
   const formattedDate = new Date(bidder.submittedDate).toLocaleDateString(
     "en-US",
     {
@@ -10,8 +12,25 @@ const TenderBidderCard = ({ bidder }) => {
     }
   );
 
+  const handleBidderClick = () => {
+    navigate("/officer/bidder-info", {
+      state: { selectedBidderId: bidder.id },
+    });
+  };
+
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-slate-200/70 bg-white/75 px-3 py-2 shadow-xs backdrop-blur-md transition-all duration-200 hover:bg-white hover:shadow-xs">
+    <div 
+      onClick={handleBidderClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleBidderClick();
+        }
+      }}
+      className="flex items-center gap-2.5 rounded-lg border border-slate-200/70 bg-white/75 px-3 py-2 shadow-xs backdrop-blur-md transition-all duration-200 hover:bg-white hover:shadow-xs cursor-pointer"
+    >
       {/* Bidder Icon */}
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
         <Users size={14} />

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Tender_Page } from "./pages/Tender_Page/Tender_page";
 import { Tender_bidder_page } from "./pages/Tender_Bidder_Page/Tender_bidder_page";
 import { Bidder_page } from "./pages/Bidder_Page/Bidder_page";
+import Profile from "../pages/Profile/Profile";
 
 const OfficerRoutes = () => {
   return (
@@ -29,6 +30,10 @@ const OfficerRoutes = () => {
       <Route
         path="/officer/bidder-info"
         element={<Bidder_page />}
+      />
+      <Route
+        path="/officer/profile"
+        element={<Profile />}
       />
 
       {/* Direct aliases for /tenders, /tender-bidder, /bidder-info */}

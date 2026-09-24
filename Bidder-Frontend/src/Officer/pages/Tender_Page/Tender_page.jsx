@@ -460,7 +460,7 @@ const Tender_Page = () => {
           )}
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedTenders.map((tender) => (
             <TenderCard key={tender.id} tender={tender} />
           ))}

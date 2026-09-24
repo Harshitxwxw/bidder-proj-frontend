@@ -5,41 +5,43 @@ import BidderTopbar from "../components/BidderTopbar";
 import TenderCard from "../components/TenderCard";
 import EmptyState from "../components/EmptyState";
 import { bidderService } from "../services/bidderService";
-import { getApplications, getWishlist } from "../services/bidderStorage";
+import { getWishlist } from "../services/bidderStorage"; // Keeping wishlist local for now as it wasn't requested
 
 const initialFilters = { turnover: "all", location: "all", department: "all", fromDate: "", toDate: "", turnoverSort: "desc" };
-const money = (value) => new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 
 export default function BidderDashboard() {
   const navigate = useNavigate();
   const [tenders, setTenders] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [filterOpen, setFilterOpen] = useState(false);
   const [refresh, setRefresh] = useState(0);
 
-  useEffect(() => { bidderService.getTenders().then(setTenders); }, []);
+  useEffect(() => {
+    bidderService.getTenders().then(setTenders).catch(console.error);
+    bidderService.getApplications().then(setApplications).catch(console.error);
+  }, []);
 
-  const applications = getApplications();
-  const appliedTenderIds = new Set(applications.map((item) => item.tenderId));
-  const allottedIds = new Set();
+  const appliedTenderIds = new Set(applications.map((item) => item.tender?.tender_id || item.tender_id));
+  const allottedIds = new Set(applications.filter(a => a.status === "APPROVED").map((item) => item.tender?.tender_id || item.tender_id));
 
   const visibleTenders = useMemo(() => {
     const q = search.trim().toLowerCase();
     return tenders
-      .filter((tender) => !appliedTenderIds.has(tender.tenderId) && !allottedIds.has(tender.tenderId))
-      .filter((tender) => !q || tender.tenderId.toLowerCase().includes(q) || tender.title.toLowerCase().includes(q))
-      .filter((tender) => appliedFilters.turnover === "all" || (appliedFilters.turnover === "under-25" ? tender.turnover < 2500000 : appliedFilters.turnover === "25-50" ? tender.turnover >= 2500000 && tender.turnover <= 5000000 : appliedFilters.turnover === "50-100" ? tender.turnover > 5000000 && tender.turnover <= 10000000 : tender.turnover > 10000000))
+      .filter((tender) => !appliedTenderIds.has(tender.tender_id || tender.tenderId) && !allottedIds.has(tender.tender_id || tender.tenderId))
+      .filter((tender) => !q || (tender.tender_id || tender.tenderId || "").toLowerCase().includes(q) || (tender.title || "").toLowerCase().includes(q))
+      .filter((tender) => appliedFilters.turnover === "all" || (appliedFilters.turnover === "under-25" ? tender.estimated_value < 2500000 : appliedFilters.turnover === "25-50" ? tender.estimated_value >= 2500000 && tender.estimated_value <= 5000000 : appliedFilters.turnover === "50-100" ? tender.estimated_value > 5000000 && tender.estimated_value <= 10000000 : tender.estimated_value > 10000000))
       .filter((tender) => appliedFilters.location === "all" || tender.location === appliedFilters.location)
-      .filter((tender) => appliedFilters.department === "all" || tender.department === appliedFilters.department)
-      .filter((tender) => !appliedFilters.fromDate || tender.publishDate >= appliedFilters.fromDate)
-      .filter((tender) => !appliedFilters.toDate || tender.publishDate <= appliedFilters.toDate)
-      .sort((a, b) => appliedFilters.turnover !== "all" ? (appliedFilters.turnoverSort === "asc" ? a.turnover - b.turnover : b.turnover - a.turnover) : new Date(b.publishDate) - new Date(a.publishDate));
-  }, [tenders, search, appliedFilters, refresh]);
+      .filter((tender) => appliedFilters.department === "all" || tender.category === appliedFilters.department)
+      .filter((tender) => !appliedFilters.fromDate || new Date(tender.publish_date || tender.publishDate) >= new Date(appliedFilters.fromDate))
+      .filter((tender) => !appliedFilters.toDate || new Date(tender.publish_date || tender.publishDate) <= new Date(appliedFilters.toDate))
+      .sort((a, b) => appliedFilters.turnover !== "all" ? (appliedFilters.turnoverSort === "asc" ? a.estimated_value - b.estimated_value : b.estimated_value - a.estimated_value) : new Date(b.publish_date || b.publishDate) - new Date(a.publish_date || a.publishDate));
+  }, [tenders, search, appliedFilters, refresh, appliedTenderIds, allottedIds]);
 
-  const locations = [...new Set(tenders.map((item) => item.location))];
-  const departments = [...new Set(tenders.map((item) => item.department))];
+  const locations = [...new Set(tenders.map((item) => item.location).filter(Boolean))];
+  const departments = [...new Set(tenders.map((item) => item.category || item.department).filter(Boolean))];
 
   const clearFilters = () => { setFilters(initialFilters); setAppliedFilters(initialFilters); };
 
@@ -72,14 +74,14 @@ export default function BidderDashboard() {
 
           {filterOpen && (
             <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-2 xl:grid-cols-5">
-              <FilterSelect label="Turnover" icon={IndianRupee} value={filters.turnover} onChange={(value) => setFilters({ ...filters, turnover: value })} options={[["all", "Any turnover"], ["under-25", "Below ₹25L"], ["25-50", "₹25L – ₹50L"], ["50-100", "₹50L – ₹1Cr"], ["above-100", "Above ₹1Cr"]]} />
+              <FilterSelect label="Estimated Value" icon={IndianRupee} value={filters.turnover} onChange={(value) => setFilters({ ...filters, turnover: value })} options={[["all", "Any value"], ["under-25", "Below ₹25L"], ["25-50", "₹25L – ₹50L"], ["50-100", "₹50L – ₹1Cr"], ["above-100", "Above ₹1Cr"]]} />
               <FilterSelect label="Location" icon={MapPin} value={filters.location} onChange={(value) => setFilters({ ...filters, location: value })} options={[["all", "All locations"], ...locations.map((value) => [value, value])]} />
               <FilterSelect label="Department" icon={Building2} value={filters.department} onChange={(value) => setFilters({ ...filters, department: value })} options={[["all", "All departments"], ...departments.map((value) => [value, value])]} />
               <DateField label="Published from" value={filters.fromDate} onChange={(value) => setFilters({ ...filters, fromDate: value })} />
               <DateField label="Published to" value={filters.toDate} onChange={(value) => setFilters({ ...filters, toDate: value })} />
               {filters.turnover !== "all" && (
                 <div className="md:col-span-2 xl:col-span-5">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Turnover sorting</p>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Value sorting</p>
                   <div className="flex gap-2">
                     <button onClick={() => setFilters({ ...filters, turnoverSort: "asc" })} className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${filters.turnoverSort === "asc" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><ArrowUpAZ size={14} /> Ascending</button>
                     <button onClick={() => setFilters({ ...filters, turnoverSort: "desc" })} className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${filters.turnoverSort === "desc" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><ArrowDownAZ size={14} /> Descending</button>
@@ -101,7 +103,7 @@ export default function BidderDashboard() {
 
         {visibleTenders.length ? (
           <div className="mt-4 grid gap-4 xl:grid-cols-2">
-            {visibleTenders.map((tender) => <TenderCard key={tender.tenderId} tender={tender} onWishlistChange={() => setRefresh((v) => v + 1)} />)}
+            {visibleTenders.map((tender) => <TenderCard key={tender.tender_id || tender.tenderId} tender={tender} onWishlistChange={() => setRefresh((v) => v + 1)} />)}
           </div>
         ) : (
           <div className="mt-4"><EmptyState title="No tenders found" description="Try clearing the filters or search with a different Tender ID or name." /></div>

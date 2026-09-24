@@ -8,12 +8,13 @@ const formatMoney = (value) => new Intl.NumberFormat("en-IN", { style: "currency
 
 export default function TenderCard({ tender, onWishlistChange }) {
   const navigate = useNavigate();
-  const [wishlisted, setWishlisted] = useState(isWishlisted(tender.tenderId));
+  const tenderId = tender.tender_id || tender.tenderId;
+  const [wishlisted, setWishlisted] = useState(isWishlisted(tenderId));
 
   const handleWishlist = (event) => {
     event.stopPropagation();
-    const next = toggleWishlist(tender.tenderId);
-    const active = next.includes(tender.tenderId);
+    const next = toggleWishlist(tenderId);
+    const active = next.includes(tenderId);
     setWishlisted(active);
     onWishlistChange?.();
   };
@@ -26,7 +27,7 @@ export default function TenderCard({ tender, onWishlistChange }) {
             <FileCheck2 size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-600">{tender.tenderId}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-600">{tenderId}</p>
             <h3 className="mt-1 line-clamp-2 text-base font-bold leading-6 text-slate-900">{tender.title}</h3>
           </div>
         </div>
@@ -39,17 +40,16 @@ export default function TenderCard({ tender, onWishlistChange }) {
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-slate-500">
         <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"><MapPin size={14} className="text-slate-400" />{tender.location}</div>
-        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"><Building2 size={14} className="text-slate-400" />{tender.department}</div>
-        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"><IndianRupee size={14} className="text-slate-400" />₹{(tender.turnover / 100000).toFixed(0)}L turnover</div>
-        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"><CalendarDays size={14} className="text-slate-400" />Due {formatDate(tender.bidDeadline)}</div>
+        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"><Building2 size={14} className="text-slate-400" />{tender.category || tender.department}</div>
+        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"><CalendarDays size={14} className="text-slate-400" />Due {formatDate(tender.bid_deadline || tender.bidDeadline)}</div>
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-slate-400">Estimated value</p>
-          <p className="mt-0.5 text-sm font-bold text-slate-800">{formatMoney(tender.estimatedValue)}</p>
+          <p className="mt-0.5 text-sm font-bold text-slate-800">{formatMoney(tender.estimated_value || tender.estimatedValue || 0)}</p>
         </div>
-        <button onClick={() => navigate(`/bidder/tenders/${tender.tenderId}/acknowledge`)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700">
+        <button onClick={() => navigate(`/bidder/tenders/${tenderId}/details`)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700">
           View Tender <ArrowRight size={15} />
         </button>
       </div>
